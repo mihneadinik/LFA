@@ -1,0 +1,1 @@
+make -s run problem=labyrinth < /Users/mihneadnk/Desktop/Facultate/Anul3/Semestrul1/LFA/Temă-20230116/checker/checker/tests/labyrinth3.in > /Users/mihneadnk/Desktop/Facultate/Anul3/Semestrul1/LFA/Temă-20230116/checker/labyrinth3.in.out
