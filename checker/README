@@ -1,0 +1,48 @@
+Dinica Mihnea-Gabriel 333CA
+
+ACCESSIBLE
+- din fiecare stare initiala care nu a mai fost vizitata anterior pornesc o
+parcurgere DFS pe parcursul careia marchez drept vizitate toate nodurile
+intermediare in care ajung, fie ele din multimea starilor initiale sau nu;
+- de asemenea, contorizez prin cate stari am trecut, putand verifica mai
+rapid daca am vizitat deja toate starile inainte de a porni o noua parcurgere,
+astfel ca nu mai este necesar sa iterez prin matricea tranzitiilor cautand
+o noua stare nevizitata, daca deja am terminat toate starile;
+
+SYNCHRONIZE
+- din multimea starilor initiale, aleg pe rand cate 2 elemente pentru care
+urmeaza sa descopar o secventa de tranzitii in urma carora cele 2 stari se
+vor sincroniza (vor ajunge in aceeasi stare);
+- in urma descoperirii unei astfel de secvente partiale, toate starile
+initiale ramase vor efectua aceste tranzitii si se vor actualiza in multimea
+starilor, iar in locul celor 2 stari extrase se va insera o singura stare ce
+reprezinta starea lor sincronizata (fiind aceeasi pentru amandoua)
+- pentru a descoperi o astfel de secventa partiala, algoritmul se rezuma la
+a parcurge graful in stil DFS, la fiecare pas incercand sa mergem pe acelasi
+indice de tranzitie daca cele 2 noi stari rezultate nu au mai fost deja
+vizitate in aceasta configuratie, in caz contrar se incearca tranzitiile
+de la indicele urmator;
+- daca prin calea curenta din DFS s-a ajuns in 2 stari identice (sincronizate)
+marchez secventa partiala drept completa si opresc toate parcurgerile ramase
+inca active din recursivitate; altfel, daca am ajuns intr-o configuratie de
+2 stari din care nu mai pot tranzitiona catre nimic, tranzitia anterioara
+nu este una utila, deci o sterg din secventa si incerc indicele urmator, odata
+ce m-am intors din recursivitate
+- in final, dupa ce nu au mai ramas perechi de stari initiale din care sa pot
+porni parcurgeri, concatenarea tuturor secventelor partiale formeaza raspunsul
+problemei
+
+LABIRINT
+- bonusul se rezuma doar la a transforma inputul primit intr-un input ce poate
+fi rulat pe task-ul 2; astfel, fiecare element din matrice devine o stare in
+automat careia trebuie sa-i asignam un indice -> am inceput numerotarea
+starilor de la 0, mergand pe linii de la stanga la dreapta, incepand cu linia 0
+- pentru a configura tranzitiile fiecarei stari (element din matrice),
+decodificam valoarea binara primita pentru a identifica pozitiile peretilor; o
+tranzitie la EST este posibila daca nu avem perete in aceasta directie si daca
+elementul curent nu se afla pe ultima coloana din matrice -> in acest caz
+tranzitia se va realiza pe starea vecina din partea dreapta, altfel va ramane
+tot in starea curenta; Analog si pentru celelalte directii cardinale
+- pozitiile robotilor reprezinta indecsii liniei si ai coloanei elementului
+corespunzator din matrice, acestia fiind starile initiale in inputul generat
+pentru task-ul 2

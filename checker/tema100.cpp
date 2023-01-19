@@ -1,6 +1,10 @@
 #include <iostream>
 #include <vector>
+#include <unordered_set>
+#include <set>
 #include <string>
+#include <functional>
+#include <utility>
 
 void read_args(int &n, int &m, int &s, int ***transitions, int **sources) {
 	std::cin >> n >> m >> s;
@@ -46,22 +50,20 @@ void print_accesible(std::vector<bool> &accessed) {
 	}
 }
 
-// DFS to find accesible states
 void explore_states(int source, int &nr_accessed, std::vector<bool> &accessed, int **transitions, int m) {
 	accessed[source] = true;
-	nr_accessed--;
+	nr_accessed++;
 
-	for (int i = 0; i < m && nr_accessed; i++) {
+	for (int i = 0; i < m; i++) {
 		if (!accessed[transitions[source][i]]) {
 			explore_states(transitions[source][i], nr_accessed, accessed, transitions, m);
 		}
 	}
 }
 
-// proceed from sources to find accesible states
 void accesible(int n, int m, int s, int **transitions, int *sources) {
 	std::vector<bool> accessed(n, false);
-	int nr_accessed = n;
+	int nr_accessed = 0;
 
 	// in case all states are sources
 	if (s == n) {
@@ -70,13 +72,16 @@ void accesible(int n, int m, int s, int **transitions, int *sources) {
 		return;
 	}
 
-	for (int i = 0; i < s && nr_accessed; i++) {
+	for (int i = 0; i < s && nr_accessed < n; i++) {
 		if (!accessed[sources[i]]) {
 			explore_states(sources[i], nr_accessed, accessed, transitions, m);
 		}
 	}
-
 	print_accesible(accessed);
+}
+
+std::string create_merged_state(int stateA, int stateB) {
+	return std::to_string(stateA) + "," + std::to_string(stateB);
 }
 
 void print_sequence(std::vector<int> &sequence) {
@@ -85,35 +90,33 @@ void print_sequence(std::vector<int> &sequence) {
 	}
 }
 
-// all available source states transition on a partially synchronized sequence
-void transition_states(std::vector<int> &states, int state_begin, std::vector<int> &sequence, int **transitions, int m) {
-	for (auto &state : states) {
+void transition_states(std::unordered_set<int> &states, int state_begin, std::vector<int> &sequence, int **transitions, int m) {
+	std::unordered_set<int> new_states;
+	for (auto state : states) {
+		int curr_state = state;
 		for (int i = 0; i < sequence.size(); i++) {
-			state = transitions[state][sequence[i]];
+			curr_state = transitions[curr_state][sequence[i]];
 		}
+		new_states.insert(curr_state);
 	}
 
 	// replace the 2 merged states with a single one
 	for (int i = 0; i < sequence.size(); i++) {
 		state_begin = transitions[state_begin][sequence[i]];
 	}
-	states.push_back(state_begin);
+	new_states.insert(state_begin);
 
+	states = new_states;
 	sequence.clear();
 }
 
-bool contains_visited_state(std::vector<std::pair<int, int> > &visited, int stateA, int stateB) {
-	for (auto &it : visited) {
-		if (it.first == stateA && it.second == stateB) {
-			return true;
-		}
-	}
-	return false;
+bool contains_merged_state(std::unordered_set<std::string> &visited, int stateA, int stateB) {
+	return visited.find(create_merged_state(stateA, stateB)) != visited.end() ||
+		visited.find(create_merged_state(stateB, stateA)) != visited.end();
 }
 
-// DFS to find a partially synchronized sequence between 2 states
-void find_sync_sequence(std::vector<std::pair<int, int> > &visited, std::vector<int> &sequence, int stateA, int stateB, int **transitions, int m) {
-	visited.push_back(std::make_pair(stateA, stateB));
+void find_sync_sequence(std::unordered_set<std::string> &visited, std::vector<int> &sequence, int stateA, int stateB, int **transitions, int m) {
+	visited.insert(create_merged_state(stateA, stateB));
 
 	// found a partially synchronized sequence
 	if (stateA == stateB) {
@@ -126,8 +129,7 @@ void find_sync_sequence(std::vector<std::pair<int, int> > &visited, std::vector<
 		int next_state_A = transitions[stateA][i];
 		int next_state_B = transitions[stateB][i];
 
-		// avoid cycles
-		if (!contains_visited_state(visited, next_state_A, next_state_B)) {
+		if (!contains_merged_state(visited, next_state_A, next_state_B)) {
 			sequence.push_back(i);
 			int old_size = sequence.size();
 			find_sync_sequence(visited, sequence, next_state_A, next_state_B, transitions, m);
@@ -142,21 +144,19 @@ void find_sync_sequence(std::vector<std::pair<int, int> > &visited, std::vector<
 	}
 }
 
-// find the synchronized sequence between all source states
 void synchronize(int n, int m, int s, int **transitions, int *sources) {
 	std::vector<int> sequence;
-	std::vector<int> states(sources, sources + s);
-	std::vector<std::pair<int, int> > visited;
+	std::unordered_set<int> states(sources, sources + s);
+	std::unordered_set<std::string> visited;
 
 	while(states.size() > 1) {
 		// merge first 2 states
-		int stateA = states.back();
-		states.pop_back();
-		int stateB = states.back();
-		states.pop_back();
+		int stateA = *states.begin();
+		states.erase(stateA);
+		int stateB = *states.begin();
+		states.erase(stateB);
 
 		find_sync_sequence(visited, sequence, stateA, stateB, transitions, m);
-		// remove the mark
 		sequence.pop_back();
 
 		print_sequence(sequence);
